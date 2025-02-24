@@ -1,9 +1,13 @@
 <?php
-
 require('conexion.php');
 
 class serverSoap extends Conexion
 {
+    public function __construct()
+    {
+        parent::__construct(); // Heredar conexión a la BD
+    }
+
     public function calcular($num1, $num2, $operacion)
     {
         return $this->operacionRecursiva($num1, $num2, $operacion);
@@ -23,18 +27,38 @@ class serverSoap extends Conexion
             return 'Operación no válida';
         }
     }
+
+    public function getProducts()
+    {
+        $query = "SELECT * FROM producto";
+        $result = $this->db->query($query);
+        $productos = [];
+
+        while ($row = $result->fetch_assoc()) {
+            $productos[] = $row;
+        }
+
+        return $productos;
+    }
+
+    public function validarUsuario($usuario, $clave)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM usuarios WHERE usuario = ? AND clave = ?");
+        $stmt->bind_param("ss", $usuario, $clave);
+        $stmt->execute();
+        $resultado = $stmt->get_result();
+
+        if ($resultado->num_rows > 0) {
+            return "Los datos ingresados son válidos";
+        } else {
+            return "Los datos ingresados no coinciden, intente de nuevo";
+        }
+    }
 }
-    
-// Crear un nuevo servidor SOAP
+
+// Configuración del servidor SOAP
 $options = array('uri' => 'http://localhost/webservices/tema2/');
-
-// Instanciar el servidor SOAP
 $server = new SoapServer(NULL, $options);
-
-// Configurar que clase manejará las solicitudes SOAP
 $server->setClass('serverSoap');
-
-// Procesar las solicitudes SOAP
 $server->handle();
-
 ?>
